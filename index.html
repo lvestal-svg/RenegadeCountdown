@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pittsburgh Sling Game Timer</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #ffb612;
+      font-family: Arial Black, Impact, sans-serif;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    #timerPanel {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .topButtons {
+      position: absolute;
+      top: 25px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      font-size: 24px;
+      padding: 12px 24px;
+      background: #ffb612;
+      color: #000;
+      border: 4px solid white;
+      border-radius: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #startButton {
+      font-size: 90px;
+      padding: 30px 60px;
+      border-radius: 30px;
+      border: 8px solid white;
+      margin-top: 30px;
+    }
+
+    #title {
+      font-size: 70px;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    #countdownText {
+      font-size: 160px;
+      animation: pulse 0.8s infinite;
+    }
+
+    #gameTimer {
+      font-size: 180px;
+      letter-spacing: 6px;
+    }
+
+    #alertText {
+      font-size: 60px;
+      color: red;
+      margin-top: 20px;
+      display: none;
+      animation: bounce 0.5s infinite;
+    }
+
+    .danger {
+      color: red !important;
+      animation: flash 0.4s infinite;
+    }
+
+    #gameOverText {
+      font-size: 120px;
+      color: white;
+      border: 8px solid #ffb612;
+      border-radius: 30px;
+      padding: 30px 50px;
+      display: none;
+      animation: pulse 0.8s infinite;
+    }
+
+    @keyframes flash {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes bounce {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <audio id="gameMusic" src="song.mp3"></audio>
+
+  <div id="timerPanel">
+
+    <div class="topButtons">
+      <button onclick="setGameTime(60)">1 Minute</button>
+      <button onclick="setGameTime(120)">2 Minutes</button>
+      <button onclick="resetGame()">Reset</button>
+    </div>
+
+    <div id="title">PITTSBURGH SLING GAME</div>
+
+    <button id="startButton" onclick="startCountdown()">START</button>
+
+    <div id="countdownText"></div>
+
+    <div id="gameTimer">2:00</div>
+
+    <div id="alertText">FINAL 10 SECONDS!</div>
+
+    <div id="gameOverText">GAME OVER</div>
+
+  </div>
+
+  <script>
+    let gameLength = 120;
+    let timeLeft = gameLength;
+    let timerInterval;
+    let countdownInterval;
+
+    const gameMusic = document.getElementById("gameMusic");
+    const title = document.getElementById("title");
+    const startButton = document.getElementById("startButton");
+    const countdownText = document.getElementById("countdownText");
+    const gameTimer = document.getElementById("gameTimer");
+    const alertText = document.getElementById("alertText");
+    const gameOverText = document.getElementById("gameOverText");
+
+    function setGameTime(seconds) {
+      gameLength = seconds;
+      timeLeft = seconds;
+      updateTimerDisplay();
+    }
+
+    function startCountdown() {
+      clearInterval(timerInterval);
+      clearInterval(countdownInterval);
+
+      gameMusic.currentTime = 0;
+      gameMusic.play();
+
+      title.style.display = "none";
+      startButton.style.display = "none";
+      gameOverText.style.display = "none";
+      alertText.style.display = "none";
+      gameTimer.classList.remove("danger");
+      gameTimer.textContent = "";
+
+      let countdown = ["3", "2", "1", "SLING!"];
+      let index = 0;
+
+      countdownText.textContent = countdown[index];
+
+      countdownInterval = setInterval(() => {
+        index++;
+
+        if (index < countdown.length) {
+          countdownText.textContent = countdown[index];
+        } else {
+          clearInterval(countdownInterval);
+
+          setTimeout(() => {
+            countdownText.textContent = "";
+            startGameTimer();
+          }, 700);
+        }
+      }, 800);
+    }
+
+    function startGameTimer() {
+      timeLeft = gameLength;
+      updateTimerDisplay();
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+
+        if (timeLeft <= 10 && timeLeft > 0) {
+          gameTimer.classList.add("danger");
+          alertText.style.display = "block";
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+
+      gameTimer.textContent =
+        minutes + ":" + seconds.toString().padStart(2, "0");
+    }
+
+    function endGame() {
+      gameMusic.pause();
+      gameMusic.currentTime = 0;
+
+      gameTimer.classList.remove("danger");
+      gameTimer.textContent = "";
+      alertText.style.display = "none";
+      countdownText.textContent = "";
+
+      gameOverText.style.display = "block";
+      startButton.textContent = "PLAY AGAIN";
+      startButton.style.display = "block";
+    }
+
+    function resetGame() {
+      clearInterval(timerInterval);
+      clearInterval(countdownInterval);
+
+      gameMusic.pause();
+      gameMusic.currentTime = 0;
+
+      timeLeft = gameLength;
+      updateTimerDisplay();
+
+      title.style.display = "block";
+      startButton.textContent = "START";
+      startButton.style.display = "block";
+
+      countdownText.textContent = "";
+      alertText.style.display = "none";
+      gameOverText.style.display = "none";
+      gameTimer.classList.remove("danger");
+    }
+
+    updateTimerDisplay();
+  </script>
+
+</body>
+</html>
